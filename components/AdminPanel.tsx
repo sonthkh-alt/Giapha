@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { FamilyMember, Gender } from '../types';
-import { Plus, Trash2, Edit3, Download, Upload, X, Search, User, Link2, Camera, Info, MapPin, Calendar } from 'lucide-react';
+import { Plus, Trash2, Edit3, Download, Upload, X, Search, User, Link2, Camera, Info, MapPin, Calendar, ShieldCheck } from 'lucide-react';
 
 interface Props {
   members: FamilyMember[];
@@ -13,15 +13,18 @@ interface Props {
   onSelectMember: (member: FamilyMember) => void;
   initialMemberToEdit?: FamilyMember | null;
   onFormOpened?: () => void;
+  isAdmin: boolean;
+  onApprove: (id: string) => void;
 }
 
 const MemberManagement: React.FC<Props> = ({ 
     members, onAdd, onUpdate, onDelete, onBackup, onRestore, onSelectMember, 
-    initialMemberToEdit, onFormOpened 
+    initialMemberToEdit, onFormOpened, isAdmin, onApprove
 }) => {
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [adminSearch, setAdminSearch] = useState('');
+  const [activeTab, setActiveTab] = useState<'all' | 'pending'>('all');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   
@@ -84,6 +87,7 @@ const MemberManagement: React.FC<Props> = ({
   };
 
   const filteredMembers = members
+    .filter(m => activeTab === 'all' ? m.status === 'approved' : m.status === 'pending')
     .sort((a, b) => a.name.localeCompare(b.name, 'vi'))
     .filter(m => m.name.toLowerCase().includes(adminSearch.toLowerCase()));
 
@@ -92,15 +96,29 @@ const MemberManagement: React.FC<Props> = ({
       <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
         <div>
            <h2 className="text-3xl font-black text-stone-800 tracking-tight">Danh sách Thành viên</h2>
-           <p className="text-sm text-stone-500 mt-1 font-medium">Hệ thống đang lưu trữ <span className="text-red-700 font-bold">{members.length}</span> người trong phả hệ.</p>
+           <p className="text-sm text-stone-500 mt-1 font-medium">Hệ thống đang lưu trữ <span className="text-red-700 font-bold">{members.filter(m => m.status === 'approved').length}</span> người trong phả hệ.</p>
         </div>
         <button onClick={() => { setIsAdding(true); setEditingId(null); setFormData(initialFormState); }}
           className="bg-red-700 text-white px-8 py-3.5 rounded-2xl flex items-center gap-2 hover:bg-red-800 transition-all shadow-xl shadow-red-700/20 font-black text-xs uppercase tracking-widest">
-          <Plus size={18} /> Ghi danh thành viên
+          <Plus size={18} /> {isAdmin ? 'Ghi danh thành viên' : 'Đề xuất thành viên'}
         </button>
       </div>
 
       <div className="bg-white rounded-[2.5rem] shadow-sm border border-stone-200 overflow-hidden">
+        <div className="px-8 pt-6 flex gap-8 border-b border-stone-100">
+           <button onClick={() => setActiveTab('all')} className={`pb-4 text-xs font-black uppercase tracking-widest transition-all border-b-2 ${activeTab === 'all' ? 'border-red-700 text-red-700' : 'border-transparent text-stone-400 hover:text-stone-600'}`}>
+             Tất cả thành viên
+           </button>
+           {isAdmin && (
+             <button onClick={() => setActiveTab('pending')} className={`pb-4 text-xs font-black uppercase tracking-widest transition-all border-b-2 relative ${activeTab === 'pending' ? 'border-red-700 text-red-700' : 'border-transparent text-stone-400 hover:text-stone-600'}`}>
+               Chờ duyệt
+               {members.filter(m => m.status === 'pending').length > 0 && (
+                 <span className="absolute -top-1 -right-4 bg-red-700 text-white w-4 h-4 rounded-full flex items-center justify-center text-[8px]">{members.filter(m => m.status === 'pending').length}</span>
+               )}
+             </button>
+           )}
+        </div>
+
         <div className="p-6 flex flex-col md:flex-row gap-4 justify-between items-center bg-stone-50/50 border-b border-stone-100">
            <div className="relative w-full md:max-w-md">
              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" size={18} />
@@ -157,8 +175,15 @@ const MemberManagement: React.FC<Props> = ({
                     <td className="px-8 py-5 text-center">
                       <div className="flex justify-center gap-2">
                         <button onClick={() => onSelectMember(m)} className="p-2.5 text-stone-400 hover:text-stone-800 hover:bg-stone-100 rounded-xl transition-all" title="Xem chi tiết"><User size={18}/></button>
-                        <button onClick={() => { setEditingId(m.id); setFormData(m); setIsAdding(true); }} className="p-2.5 text-stone-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all" title="Chỉnh sửa"><Edit3 size={18}/></button>
-                        <button onClick={() => onDelete(m.id)} className="p-2.5 text-stone-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all" title="Xóa"><Trash2 size={18}/></button>
+                        {isAdmin && (
+                          <>
+                            {activeTab === 'pending' && (
+                              <button onClick={() => onApprove(m.id)} className="p-2.5 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all" title="Duyệt"><ShieldCheck size={18}/></button>
+                            )}
+                            <button onClick={() => { setEditingId(m.id); setFormData(m); setIsAdding(true); }} className="p-2.5 text-stone-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all" title="Chỉnh sửa"><Edit3 size={18}/></button>
+                            <button onClick={() => onDelete(m.id)} className="p-2.5 text-stone-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all" title="Xóa"><Trash2 size={18}/></button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -286,7 +311,7 @@ const MemberManagement: React.FC<Props> = ({
               
               <div className="col-span-1 md:col-span-3 pt-6 border-t border-stone-100 flex gap-4">
                 <button type="submit" className="flex-1 bg-red-700 text-white py-5 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-red-800 transition shadow-xl shadow-red-700/20 active:scale-95">
-                  {editingId ? 'Ghi nhận toàn bộ thay đổi' : 'Ghi danh thành viên mới'}
+                  {editingId ? 'Ghi nhận toàn bộ thay đổi' : (isAdmin ? 'Ghi danh thành viên mới' : 'Gửi đề xuất thành viên')}
                 </button>
                 <button type="button" onClick={() => setIsAdding(false)} className="px-12 bg-stone-100 text-stone-500 py-5 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-stone-200 transition">Hủy bỏ</button>
               </div>

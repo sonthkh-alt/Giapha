@@ -21,17 +21,18 @@ const TreeVisualization: React.FC<Props> = ({ data, onMemberClick }) => {
 
     // 1. Lọc dữ liệu dựa trên chế độ xem
     const getFilteredMembers = () => {
+      const approvedOnly = data.filter(m => m.status === 'approved');
       if (viewMode === 'bloodline') {
-        return data.filter(m => {
+        return approvedOnly.filter(m => {
           if (isHaMember(m.name)) return true;
           if (m.spouseId) {
-            const spouse = data.find(s => s.id === m.spouseId);
+            const spouse = approvedOnly.find(s => s.id === m.spouseId);
             return spouse && isHaMember(spouse.name);
           }
           return false;
         });
       }
-      return data;
+      return approvedOnly;
     };
 
     const filteredMembers = getFilteredMembers();

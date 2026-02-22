@@ -10,20 +10,21 @@ interface Props {
 }
 
 const Dashboard: React.FC<Props> = ({ members, onAddNew, onViewTree }) => {
+  const approvedMembers = members.filter(m => m.status === 'approved');
 
   const isHaMember = (name: string) => name.startsWith('Hà ');
   
-  const totalMembers = members.length;
-  const haMembersCount = members.filter(m => isHaMember(m.name)).length;
+  const totalMembers = approvedMembers.length;
+  const haMembersCount = approvedMembers.filter(m => isHaMember(m.name)).length;
   const nonHaMembersCount = totalMembers - haMembersCount;
-  const livingMembersCount = members.filter(m => !m.isDeceased).length;
+  const livingMembersCount = approvedMembers.filter(m => !m.isDeceased).length;
   
   // Sơ bộ tính toán số thế hệ, giả định người không có cha mẹ là thế hệ 1
   const getGenerations = () => {
-    const memberMap = new Map(members.map(m => [m.id, m]));
+    const memberMap = new Map(approvedMembers.map(m => [m.id, m]));
     let maxDepth = 0;
     
-    members.forEach(member => {
+    approvedMembers.forEach(member => {
         let current = member;
         let depth = 1;
         while(current.fatherId && memberMap.has(current.fatherId)){
@@ -74,14 +75,14 @@ const Dashboard: React.FC<Props> = ({ members, onAddNew, onViewTree }) => {
                        <p className="font-bold text-stone-700 group-hover:text-blue-800">Xem Cây Gia Phả</p>
                        <p className="text-xs text-stone-500">Khám phá sơ đồ huyết thống trực quan.</p>
                    </div>
-               </button>
+                </button>
             </div>
         </div>
         
         <div className="bg-white p-6 rounded-xl border border-stone-200 shadow-sm">
             <h3 className="text-lg font-bold text-stone-800 mb-4">Thành viên mới nhất</h3>
             <div className="space-y-3">
-              {[...members].slice(-3).reverse().map(m => (
+              {[...approvedMembers].slice(-3).reverse().map(m => (
                  <div key={m.id} className="flex items-center gap-3">
                     <img src={m.photoUrl || `https://i.pravatar.cc/32?u=${m.id}`} className="w-8 h-8 rounded-full object-cover"/>
                     <div>
@@ -96,6 +97,7 @@ const Dashboard: React.FC<Props> = ({ members, onAddNew, onViewTree }) => {
     </div>
   );
 };
+
 
 const StatCard = ({ icon: Icon, title, value, color }: {icon: React.ElementType, title: string, value: number, color: string}) => {
   const colors: {[key: string]: string} = {

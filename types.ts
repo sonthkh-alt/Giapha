@@ -1,16 +1,16 @@
 
 export type Gender = 'Male' | 'Female' | 'Other';
 
+export type MemberStatus = 'approved' | 'pending';
+
 export interface FamilyMember {
   id: string;
   name: string;
   birthDate?: string;
-  // Thêm birthYear để tương thích với dữ liệu trong constants.tsx
   birthYear?: string;
-  deathDate?: string; // Dùng cho ngày cụ thể nếu cần
-  deathYear?: string; // Năm mất
+  deathDate?: string;
+  deathYear?: string;
   isDeceased: boolean;
-  // Chuyển hometown thành optional vì nhiều bản ghi trong INITIAL_DATA thiếu trường này
   hometown?: string;
   photoUrl?: string;
   gender: Gender;
@@ -18,11 +18,21 @@ export interface FamilyMember {
   motherId?: string;
   spouseId?: string;
   bio?: string;
+  status?: MemberStatus;
+}
+
+export interface SystemSettings {
+  version: string;
+  email: string;
+  hotline: string;
+  website: string;
+  securityTerms: string;
 }
 
 export interface FamilyData {
   members: FamilyMember[];
   lastUpdated: string;
+  settings?: SystemSettings;
 }
 
 export interface TreeDataNode {

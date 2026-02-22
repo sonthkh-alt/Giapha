@@ -53,7 +53,7 @@ const Sidebar: React.FC<Props> = ({ activeView, setActiveView }) => {
           }`}
         >
           <Settings size={18} />
-          <span>Cài đặt</span>
+          <span>Setting</span>
         </button>
       </div>
     </aside>
